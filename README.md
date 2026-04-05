@@ -3,8 +3,8 @@ My administration hometasks
 2. Second +
 3. Third +
 4. Forth +
-5. Fifth -process
-6. Sixth -
+5. Fifth +
+6. Sixth -process
 7. Seventh -
 8. Eighth -
 9. Ninth -
