@@ -1,0 +1,63 @@
+baseurl = "https://career.habr.com/api/frontend/vacancies?type=all&with_salary=1"
+page = 1
+valute_res = requests.get("https://www.cbr-xml-daily.ru/daily_json.js").json()
+valutes = valute_res["Valute"]
+
+all_vacancies = []
+
+while True:
+    response = requests.get(baseurl + str(page)).json()
+    all_vacancies.extend(response["list"])
+    
+    if page >= response["meta"]["totalPages"]:
+        break
+    page += 1
+
+# Словари для хранения данных
+vac_salaries = [] # Список (зарплата, название_вакансии)
+skill_map = {}   # Словарь {название_навыка: [список_зарплат]}
+
+for vac in all_vacancies:
+    try:
+        # Конвертация зарплаты в рубли
+        curr = vac["salary"]["currency"]
+        
+        s_raw = float(vac["salary"]["from"]) if vac["salary"]["from"] else float(vac["salary"]["to"])
+        
+        if curr != "rur":
+            s_rub = s_raw * valutes[curr.upper()]["Value"] / valutes[curr.upper()]["Nominal"]
+        else:
+            s_rub = s_raw
+
+        # Сохраняем для поиска самой дорогой вакансии
+        vac_salaries.append((s_rub, vac["title"]))
+
+        # Группируем зарплаты по навыкам
+        for skill in vac["skills"]:
+            skill_name = skill["title"]
+            if skill_name not in skill_map:
+                skill_map[skill_name] = []
+            skill_map[skill_name].append(s_rub)
+            
+    except (KeyError, TypeError):
+        continue
+
+
+# 1. Самая высокооплачиваемая вакансия
+max_salary, max_title = max(vac_salaries, key=lambda x: x[0])
+print(f"\n1. Самая высокооплачиваемая вакансия: {max_title}")
+print(f"   Зарплата: {max_salary:,.0f} руб.")
+
+
+# 2. Топ-3 самых "дорогих" навыка (по медиане)
+skill_medians = []
+for name, salaries in skill_map.items():
+    if len(salaries) > 1: 
+        skill_medians.append((name, statistics.median(salaries)))
+
+# Сортируем по убыванию медианы и берем топ-3
+top_3_skills = sorted(skill_medians, key=lambda x: x[1], reverse=True)[:3]
+
+print("\n2. Топ-3 самых дорогих навыка (по медиане зарплат):")
+for i, (name, med) in enumerate(top_3_skills, 1):
+    print(f"   {i}. {name} — медианная зарплата: {med:,.0f} руб.")
