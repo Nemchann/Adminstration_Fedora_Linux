@@ -8,7 +8,7 @@ My administration hometasks
 7. Seventh +
 8. Eighth +
 9. Ninth +
-10. Tenth -process
-11. Eleventh -process
+10. Tenth +
+11. Eleventh +
 12. Twelfth -
 13. Thirteenth -
